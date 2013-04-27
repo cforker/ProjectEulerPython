@@ -4,6 +4,7 @@ Created on Apr 26, 2013
 @author: cforker
 '''
 from itertools import count
+from Protein import Protein
 
 def leadingZeroes(binstring,length):
     return '0'*(length-len(binstring[2:])) + binstring[2:]
@@ -17,4 +18,5 @@ if __name__ == '__main__':
         sprot = leadingZeroes(bin(prot),N)
         print sprot
           
-        
+    ptest = Protein('00010101')
+    
