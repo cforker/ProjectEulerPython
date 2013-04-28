@@ -16,7 +16,10 @@ if __name__ == '__main__':
         if (prot == 2**N):
             break
         sprot = leadingZeroes(bin(prot),N)
-        print sprot
+        #print sprot
           
     ptest = Protein('00010101')
-    
+    ptest.setFolding([0,1,1,-1,0,0])
+    ptest.foldingDimensions()
+    ptest.buildGrid()
+    ptest.printEverything()

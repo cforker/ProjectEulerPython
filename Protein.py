@@ -15,13 +15,25 @@ class Protein(object):
     protein = ''
     folding = []
     gridsize = [1,1]
+    gridoffset = [0,0]
     proteingrid = []
+    location = []
 
     def __init__(self,proteinstr):
         self.protein = proteinstr
         
     def setFolding(self,fold):
         self.folding = fold
+        
+    def printEverything(self):
+        print "Protein",self.protein
+        print "Folding",self.folding
+        print "Grid size and offset",self.gridsize,self.gridoffset
+        for line in self.proteingrid:
+            print line
+        for loc in self.location:
+            print loc
+        return
 
     def findOptimalFolding(self):
         # 1. wave hands in the air
@@ -32,7 +44,7 @@ class Protein(object):
     def updateLocation(self,location,direction,nextfold):
         location[0] += direction[0]
         location[1] += direction[1]
-        newdirection = direction
+        newdirection = direction[:]
         if (nextfold != 0):
             # rotate clockwise for nextfold=1,counterclockwise for nextfold=-1
             newdirection[0] = direction[1] * nextfold
@@ -47,27 +59,42 @@ class Protein(object):
         xlist = []
         ylist = []
         location = [0,0]
-        direction = [1,0]
-        grid.append(location)
+        direction = [0,1]
+        grid.append(location[:])
         xlist.append(location[0])
         ylist.append(location[1])
         for fold in self.folding:
             location,direction = self.updateLocation(location, direction, fold)
+            #print "New location is",location,"new direction",direction,fold
             if location not in grid:
-                grid.append(location)
+                grid.append(location[:])
                 xlist.append(location[0])
                 ylist.append(location[1])
             else:
-                print "Illegal folding"
+                print "Illegal folding",location,grid
                 self.gridsize = [0,0]
                 return 0
+        location,direction = self.updateLocation(location, direction, 0)
+        if location not in grid:
+            grid.append(location)
+            xlist.append(location[0])
+            ylist.append(location[1])
+        else:
+            print "Illegal folding"
+            self.gridsize = [0,0]
+            return 0
         self.gridsize[0] = max(xlist) - min(xlist) + 1
         self.gridsize[1] = max(ylist) - min(ylist) + 1
+        self.gridoffset[0] = -1 * min(xlist)
+        self.gridoffset[1] = -1 * min(ylist)
+        self.location = grid[:]
         return 0     
     
     def buildGrid(self):
-        self.grid = [None]*self.gridsize[1]
+        self.proteingrid = [None]*self.gridsize[1]
         for row in range(self.gridsize[1]):
-            self.grid[row] = [-1]*self.gridsize[0]
+            self.proteingrid[row] = [-1]*self.gridsize[0]
+        for i in range(len(self.location)):
+            self.proteingrid[self.location[i][1]+self.gridoffset[1]][self.location[i][0]+self.gridoffset[0]] = int(self.protein[i])
         return
         
