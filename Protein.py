@@ -18,21 +18,27 @@ class Protein(object):
     gridoffset = [0,0]
     proteingrid = []
     location = []
+    HBonds = 0
 
     def __init__(self,proteinstr):
         self.protein = proteinstr
         
     def setFolding(self,fold):
         self.folding = fold
+        self.folding.append(0)
+        return
         
     def printEverything(self):
         print "Protein",self.protein
         print "Folding",self.folding
-        print "Grid size and offset",self.gridsize,self.gridoffset
+        print "Grid size and offset",self.gridsize,self.gridoffset,"\n"
         for line in self.proteingrid:
-            print line
-        for loc in self.location:
-            print loc
+            for element in line:
+                print element,
+            print ""
+        #for loc in self.location:
+        #    print loc
+        print "\nH Bonds:",self.HBonds
         return
 
     def findOptimalFolding(self):
@@ -42,6 +48,7 @@ class Protein(object):
         return 0
     
     def updateLocation(self,location,direction,nextfold):
+        # helper function for foldingDimensions
         location[0] += direction[0]
         location[1] += direction[1]
         newdirection = direction[:]
@@ -56,45 +63,55 @@ class Protein(object):
         # find the x and y length of a minimal rectangular grid that encloses the current folding
         # also check if the folding is valid 
         grid = []
-        xlist = []
-        ylist = []
+        xmin,xmax,ymin,ymax = 0,0,0,0
         location = [0,0]
         direction = [0,1]
         grid.append(location[:])
-        xlist.append(location[0])
-        ylist.append(location[1])
         for fold in self.folding:
             location,direction = self.updateLocation(location, direction, fold)
             #print "New location is",location,"new direction",direction,fold
             if location not in grid:
                 grid.append(location[:])
-                xlist.append(location[0])
-                ylist.append(location[1])
+                xmin = min([xmin,location[0]])
+                xmax = max([xmax,location[0]])
+                ymin = min([ymin,location[1]])
+                ymax = max([ymax,location[1]])
             else:
                 print "Illegal folding",location,grid
                 self.gridsize = [0,0]
                 return 0
-        location,direction = self.updateLocation(location, direction, 0)
-        if location not in grid:
-            grid.append(location)
-            xlist.append(location[0])
-            ylist.append(location[1])
-        else:
-            print "Illegal folding"
-            self.gridsize = [0,0]
-            return 0
-        self.gridsize[0] = max(xlist) - min(xlist) + 1
-        self.gridsize[1] = max(ylist) - min(ylist) + 1
-        self.gridoffset[0] = -1 * min(xlist)
-        self.gridoffset[1] = -1 * min(ylist)
+        self.gridsize[0] = xmax - xmin + 1
+        self.gridsize[1] = ymax - ymin + 1
+        self.gridoffset[0] = -1 * xmin
+        self.gridoffset[1] = -1 * ymin
         self.location = grid[:]
         return 0     
     
     def buildGrid(self):
+        # uses self.gridsize, self.gridoffset, self.location (maps each element to a grid location) and 
+        # self.protrein to populate a grid with the protein chain elements
         self.proteingrid = [None]*self.gridsize[1]
         for row in range(self.gridsize[1]):
-            self.proteingrid[row] = [-1]*self.gridsize[0]
+            self.proteingrid[row] = ['X']*self.gridsize[0]
         for i in range(len(self.location)):
-            self.proteingrid[self.location[i][1]+self.gridoffset[1]][self.location[i][0]+self.gridoffset[0]] = int(self.protein[i])
+            self.proteingrid[self.location[i][1]+self.gridoffset[1]][self.location[i][0]+self.gridoffset[0]] = self.protein[i]
         return
+    
+    def countHBonds(self):
+        # calculate the number of H bonds in self.proteingrid
+        hcount = 0
+        # check horizontal edges
+        for i in range(self.gridsize[1]):
+            for j in range(self.gridsize[0]-1):
+                if (self.proteingrid[i][j]=='1' and self.proteingrid[i][j+1]=='1'):
+                    hcount += 1
+        # check vertical edges
+        for i in range(self.gridsize[1]-1):
+            for j in range(self.gridsize[0]):
+                if (self.proteingrid[i][j]=='1' and self.proteingrid[i+1][j]=='1'):
+                    hcount += 1
+        print "Current folding has",hcount,"H bonds"
+        self.HBonds = hcount
+        return hcount
+        
         
